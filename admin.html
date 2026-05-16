@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUDIZ — Panel de Administración</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black:#0a0a0a; --white:#fafafa; --gray-50:#f9f9f9; --gray-100:#f4f4f4;
+    --gray-200:#e8e8e8; --gray-300:#d0d0d0; --gray-400:#999; --gray-600:#555;
+    --accent:#c8a96e; --accent-dark:#a08548;
+    --green:#16a34a; --green-bg:#dcfce7; --red:#dc2626; --red-bg:#fee2e2;
+    --blue:#2563eb; --blue-bg:#dbeafe;
+    --font-display:'Playfair Display',serif; --font-body:'DM Sans',sans-serif;
+    --sidebar:260px; --radius:4px;
+    --shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg:0 10px 25px rgba(0,0,0,0.12);
+  }
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:var(--font-body); background:var(--gray-100); color:var(--black); font-size:14px; }
+
+  /* ─── LAYOUT ─── */
+  .app { display:grid; grid-template-columns:var(--sidebar) 1fr; min-height:100vh; }
+
+  /* ─── SIDEBAR ─── */
+  aside { background:var(--black); color:var(--white); position:sticky; top:0; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+  .aside-logo { padding:28px 24px 24px; border-bottom:1px solid rgba(255,255,255,0.08); }
+  .aside-logo span { font-family:var(--font-display); font-size:20px; letter-spacing:0.14em; display:block; }
+  .aside-logo small { font-size:10px; color:rgba(255,255,255,0.35); letter-spacing:0.1em; text-transform:uppercase; margin-top:4px; display:block; }
+  nav.side-nav { padding:16px 12px; flex:1; display:flex; flex-direction:column; gap:2px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius); cursor:pointer; color:rgba(255,255,255,0.6); font-size:13.5px; font-weight:500; transition:all 0.2s; border:none; background:none; width:100%; text-align:left; }
+  .nav-item:hover { background:rgba(255,255,255,0.08); color:var(--white); }
+  .nav-item.active { background:rgba(255,255,255,0.12); color:var(--white); }
+  .nav-item svg { flex-shrink:0; opacity:0.7; }
+  .nav-item.active svg { opacity:1; }
+  .side-divider { height:1px; background:rgba(255,255,255,0.07); margin:8px 12px; }
+  .aside-footer { padding:16px; border-top:1px solid rgba(255,255,255,0.08); }
+  .store-link { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:var(--radius); background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.7); text-decoration:none; font-size:12.5px; transition:all 0.2s; }
+  .store-link:hover { background:rgba(255,255,255,0.12); color:var(--white); }
+
+  /* ─── MAIN ─── */
+  main { display:flex; flex-direction:column; min-height:100vh; }
+  .topbar { background:var(--white); border-bottom:1px solid var(--gray-200); padding:0 32px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .topbar-title { font-size:15px; font-weight:600; }
+  .topbar-actions { display:flex; gap:8px; align-items:center; }
+  .content { padding:32px; flex:1; }
+
+  /* ─── BUTTONS ─── */
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:9px 18px; border-radius:var(--radius); font-family:var(--font-body); font-size:13px; font-weight:500; cursor:pointer; border:none; transition:all 0.2s; letter-spacing:0.01em; }
+  .btn-primary { background:var(--black); color:var(--white); }
+  .btn-primary:hover { background:#222; }
+  .btn-danger { background:var(--red); color:var(--white); }
+  .btn-danger:hover { background:#b91c1c; }
+  .btn-success { background:var(--green); color:var(--white); }
+  .btn-success:hover { background:#15803d; }
+  .btn-outline { background:transparent; color:var(--black); border:1.5px solid var(--gray-300); }
+  .btn-outline:hover { border-color:var(--black); background:var(--gray-50); }
+  .btn-sm { padding:6px 12px; font-size:12px; }
+  .btn-icon { width:32px; height:32px; padding:0; border-radius:var(--radius); display:inline-flex; align-items:center; justify-content:center; }
+
+  /* ─── STATS ─── */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  .stat-card { background:var(--white); border:1px solid var(--gray-200); border-radius:var(--radius); padding:20px 24px; }
+  .stat-label { font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gray-400); margin-bottom:8px; }
+  .stat-value { font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--black); }
+  .stat-sub { font-size:11.5px; color:var(--gray-400); margin-top:4px; }
+
+  /* ─── TABLE ─── */
+  .table-wrap { background:var(--white); border:1px solid var(--gray-200); border-radius:var(--radius); overflow:hidden; }
+  .table-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--gray-200); }
+  .table-title { font-weight:600; font-size:14px; }
+  .table-search { display:flex; align-items:center; gap:8px; }
+  .table-search input { border:1.5px solid var(--gray-200); border-radius:var(--radius); padding:7px 12px; font-size:13px; outline:none; width:220px; font-family:var(--font-body); transition:border-color 0.2s; }
+  .table-search input:focus { border-color:var(--black); }
+  .filter-select { border:1.5px solid var(--gray-200); border-radius:var(--radius); padding:7px 12px; font-size:13px; outline:none; font-family:var(--font-body); cursor:pointer; background:var(--white); }
+  table { width:100%; border-collapse:collapse; }
+  thead { background:var(--gray-50); }
+  th { padding:10px 16px; text-align:left; font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gray-400); border-bottom:1px solid var(--gray-200); white-space:nowrap; }
+  td { padding:12px 16px; border-bottom:1px solid var(--gray-100); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:var(--gray-50); }
+  .product-thumb-cell { width:44px; height:44px; background:var(--gray-100); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; font-size:22px; overflow:hidden; flex-shrink:0; }
+  .product-thumb-cell img { width:100%; height:100%; object-fit:cover; }
+  .product-name-cell { display:flex; align-items:center; gap:12px; }
+  .product-name-text { font-weight:500; font-size:13.5px; }
+  .product-id-text { font-size:11px; color:var(--gray-400); margin-top:2px; font-family:monospace; }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:20px; font-size:11px; font-weight:600; }
+  .badge-green { background:var(--green-bg); color:var(--green); }
+  .badge-red { background:var(--red-bg); color:var(--red); }
+  .badge-gray { background:var(--gray-100); color:var(--gray-600); }
+  .badge-gold { background:#fef3c7; color:#92400e; }
+  .badge-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .actions-cell { display:flex; gap:4px; justify-content:flex-end; }
+  .empty-row td { text-align:center; padding:60px; color:var(--gray-400); font-size:14px; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; display:flex; align-items:flex-start; justify-content:center; padding:32px 16px; overflow-y:auto; opacity:0; pointer-events:none; transition:opacity 0.25s; }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal { background:var(--white); border-radius:8px; width:100%; max-width:720px; box-shadow:var(--shadow-lg); animation:modalIn 0.25s ease; }
+  @keyframes modalIn { from{transform:translateY(-20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-head { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--gray-200); }
+  .modal-head h2 { font-family:var(--font-display); font-size:18px; font-weight:600; }
+  .modal-close { background:none; border:none; cursor:pointer; font-size:22px; color:var(--gray-400); width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:background 0.2s; }
+  .modal-close:hover { background:var(--gray-100); color:var(--black); }
+  .modal-body { padding:24px; display:flex; flex-direction:column; gap:20px; max-height:calc(100vh - 160px); overflow-y:auto; }
+  .modal-foot { padding:16px 24px; border-top:1px solid var(--gray-200); display:flex; justify-content:flex-end; gap:8px; }
+
+  /* ─── FORM ─── */
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-row.three { grid-template-columns:1fr 1fr 1fr; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group.full { grid-column:1/-1; }
+  label { font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--gray-600); }
+  input[type=text], input[type=number], input[type=url], textarea, select {
+    border:1.5px solid var(--gray-200); border-radius:var(--radius); padding:9px 12px;
+    font-size:13.5px; font-family:var(--font-body); outline:none; transition:border-color 0.2s;
+    background:var(--white); color:var(--black); width:100%;
+  }
+  input:focus, textarea:focus, select:focus { border-color:var(--black); }
+  textarea { resize:vertical; min-height:80px; line-height:1.5; }
+  .form-section-title { font-size:11px; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--gray-400); padding-bottom:8px; border-bottom:1px solid var(--gray-200); }
+
+  /* ─── IMAGE MANAGER ─── */
+  .image-manager { border:1.5px dashed var(--gray-300); border-radius:var(--radius); padding:16px; background:var(--gray-50); }
+  .image-manager-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .image-manager-title { font-size:12px; font-weight:600; color:var(--gray-600); }
+  .image-add-row { display:flex; gap:8px; margin-bottom:12px; }
+  .image-add-row input { flex:1; }
+  .images-grid { display:flex; flex-wrap:wrap; gap:8px; }
+  .img-item { position:relative; width:80px; border:2px solid var(--gray-200); border-radius:4px; overflow:hidden; background:var(--gray-100); }
+  .img-item.cover { border-color:var(--black); }
+  .img-item img { width:80px; height:80px; object-fit:cover; display:block; }
+  .img-item-emoji { width:80px; height:80px; display:flex; align-items:center; justify-content:center; font-size:32px; }
+  .img-item-actions { position:absolute; inset:0; background:rgba(0,0,0,0.55); display:none; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+  .img-item:hover .img-item-actions { display:flex; }
+  .img-action-btn { background:rgba(255,255,255,0.9); border:none; border-radius:3px; padding:3px 7px; font-size:10px; font-weight:600; cursor:pointer; color:var(--black); white-space:nowrap; }
+  .img-action-btn.danger { background:rgba(220,38,38,0.85); color:var(--white); }
+  .img-cover-badge { position:absolute; top:4px; left:4px; background:var(--black); color:var(--white); font-size:9px; font-weight:700; padding:2px 5px; border-radius:2px; }
+  .no-images { color:var(--gray-400); font-size:12.5px; text-align:center; padding:16px 0; }
+
+  /* ─── TAGS INPUT ─── */
+  .tags-wrap { border:1.5px solid var(--gray-200); border-radius:var(--radius); padding:6px 8px; min-height:42px; display:flex; flex-wrap:wrap; gap:4px; background:var(--white); cursor:text; transition:border-color 0.2s; }
+  .tags-wrap:focus-within { border-color:var(--black); }
+  .tag { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; background:var(--gray-100); border-radius:20px; font-size:12px; }
+  .tag-rm { background:none; border:none; cursor:pointer; font-size:14px; color:var(--gray-400); line-height:1; padding:0 2px; }
+  .tag-rm:hover { color:var(--red); }
+  .tag-input { border:none; outline:none; font-size:13px; font-family:var(--font-body); min-width:80px; background:transparent; flex:1; }
+
+  /* ─── DELETE CONFIRM ─── */
+  .confirm-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1100; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+  .confirm-overlay.open { opacity:1; pointer-events:all; }
+  .confirm-box { background:var(--white); border-radius:8px; padding:28px; max-width:380px; width:100%; box-shadow:var(--shadow-lg); text-align:center; }
+  .confirm-icon { font-size:40px; margin-bottom:16px; }
+  .confirm-box h3 { font-family:var(--font-display); font-size:18px; margin-bottom:8px; }
+  .confirm-box p { font-size:13.5px; color:var(--gray-600); margin-bottom:24px; line-height:1.5; }
+  .confirm-actions { display:flex; gap:8px; justify-content:center; }
+
+  /* ─── TOGGLE ─── */
+  .toggle { display:flex; align-items:center; gap:8px; cursor:pointer; }
+  .toggle input { display:none; }
+  .toggle-track { width:40px; height:22px; background:var(--gray-300); border-radius:11px; position:relative; transition:background 0.2s; flex-shrink:0; }
+  .toggle input:checked ~ .toggle-track { background:var(--green); }
+  .toggle-thumb { position:absolute; width:16px; height:16px; background:var(--white); border-radius:50%; top:3px; left:3px; transition:left 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+  .toggle input:checked ~ .toggle-track .toggle-thumb { left:21px; }
+  .toggle-label { font-size:13px; font-weight:500; }
+
+  /* ─── NOTICE ─── */
+  .notice { padding:12px 16px; border-radius:var(--radius); font-size:13px; display:flex; align-items:flex-start; gap:8px; }
+  .notice-info { background:var(--blue-bg); color:#1e40af; }
+  .notice-success { background:var(--green-bg); color:#166534; }
+  .notice-danger { background:var(--red-bg); color:#991b1b; }
+
+  /* ─── TOAST ─── */
+  .admin-toast { position:fixed; bottom:24px; right:24px; background:var(--black); color:var(--white); padding:12px 20px; border-radius:40px; font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px; z-index:9999; opacity:0; transform:translateY(10px); pointer-events:none; transition:all 0.3s ease; box-shadow:0 4px 20px rgba(0,0,0,0.25); }
+  .admin-toast.show { opacity:1; transform:translateY(0); }
+
+  /* ─── RESP ─── */
+  @media(max-width:900px) {
+    .app { grid-template-columns:1fr; }
+    aside { display:none; }
+    .stats-grid { grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+<!-- ─── SIDEBAR ─── -->
+<aside>
+  <div class="aside-logo">
+    <span>AUDIZ</span>
+    <small>Panel de Administración</small>
+  </div>
+  <nav class="side-nav">
+    <button class="nav-item active" id="nav-products" onclick="showSection('products')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 4-4 4 4"/><path d="M12 17v4"/></svg>
+      Catálogo de Productos
+    </button>
+    <button class="nav-item" id="nav-add" onclick="openAddModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+      Agregar Producto
+    </button>
+    <div class="side-divider"></div>
+    <button class="nav-item" id="nav-stock" onclick="showSection('stock')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Gestión de Stock
+    </button>
+    <button class="nav-item" id="nav-export" onclick="exportCatalog()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar Catálogo
+    </button>
+    <button class="nav-item" id="nav-import" onclick="document.getElementById('import-file').click()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importar Catálogo
+    </button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importCatalog(event)">
+    <div class="side-divider"></div>
+    <button class="nav-item" onclick="resetToDefault()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      Restablecer Catálogo
+    </button>
+  </nav>
+  <div class="aside-footer">
+    <a class="store-link" href="index.html" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Ver Tienda
+    </a>
+  </div>
+</aside>
+
+<!-- ─── MAIN ─── -->
+<main>
+  <div class="topbar">
+    <span class="topbar-title" id="section-title">Catálogo de Productos</span>
+    <div class="topbar-actions">
+      <span id="save-status" style="font-size:12px;color:var(--gray-400)">Guardado automático</span>
+      <button class="btn btn-primary" onclick="openAddModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        Agregar Producto
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- STATS -->
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <!-- PRODUCTS SECTION -->
+    <div id="section-products">
+      <div class="table-wrap">
+        <div class="table-header">
+          <span class="table-title">Todos los productos</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div class="table-search">
+              <input type="text" placeholder="Buscar producto..." id="table-search" oninput="filterTable()">
+            </div>
+            <select class="filter-select" id="cat-filter" onchange="filterTable()">
+              <option value="">Todas las categorías</option>
+              <option value="audifonos">Audífonos</option>
+              <option value="consolas">Consolas</option>
+              <option value="bocinas">Bocinas</option>
+              <option value="smart">Smart Home</option>
+              <option value="accesorios">Accesorios</option>
+              <option value="baterias">Baterías</option>
+              <option value="redes">Redes / Mesh</option>
+              <option value="otros">Otros</option>
+            </select>
+            <select class="filter-select" id="stock-filter" onchange="filterTable()">
+              <option value="">Todo el stock</option>
+              <option value="in">En stock</option>
+              <option value="out">Agotados</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="products-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Stock</th>
+                <th>Imágenes</th>
+                <th style="text-align:right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STOCK SECTION -->
+    <div id="section-stock" style="display:none">
+      <div class="notice notice-info" style="margin-bottom:20px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        Desde aquí podés activar o desactivar el stock de cada producto rápidamente. Los productos agotados se muestran en la tienda con aviso de "Agotado".
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><span class="table-title">Estado de Stock</span></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Estado actual</th><th style="text-align:right">Acción rápida</th></tr></thead>
+            <tbody id="stock-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ─── ADD / EDIT MODAL ─── -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">Agregar Producto</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Info básica -->
+      <span class="form-section-title">Información básica</span>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre del producto *</label>
+          <input type="text" id="f-name" placeholder="Ej: Beats Studio Pro">
+        </div>
+        <div class="form-group">
+          <label>Precio (USD) *</label>
+          <input type="number" id="f-price" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Categoría *</label>
+          <select id="f-category" onchange="updateCategoryLabel()">
+            <option value="audifonos">Audífonos</option>
+            <option value="consolas">Consolas</option>
+            <option value="bocinas">Bocinas Portátiles</option>
+            <option value="smart">Smart Home</option>
+            <option value="accesorios">Accesorios de Consola</option>
+            <option value="baterias">Baterías Portátiles</option>
+            <option value="redes">Redes / Mesh</option>
+            <option value="otros">Otros</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Condición</label>
+          <select id="f-condition">
+            <option value="new">Nuevo</option>
+            <option value="used">Usado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Emoji (ícono)</label>
+          <input type="text" id="f-emoji" placeholder="🎧" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>Etiqueta / Badge</label>
+          <select id="f-badge">
+            <option value="">Sin etiqueta</option>
+            <option value="Destacado|gold">⭐ Destacado</option>
+            <option value="Nuevo|">🆕 Nuevo</option>
+            <option value="Oferta|gold">🔥 Oferta</option>
+            <option value="Usado|used">🔄 Usado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descripción *</label>
+        <textarea id="f-desc" placeholder="Describí el producto de forma clara y atractiva..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>¿En stock?</label>
+        <label class="toggle">
+          <input type="checkbox" id="f-instock" checked>
+          <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          <span class="toggle-label">Disponible para venta</span>
+        </label>
+      </div>
+
+      <!-- Características -->
+      <span class="form-section-title" style="margin-top:4px">Características</span>
+      <div class="form-group">
+        <label>Características (una por línea)</label>
+        <textarea id="f-features" placeholder="Cancelación de ruido activa&#10;40 horas de batería&#10;Compatible con Apple y Android" style="min-height:100px"></textarea>
+      </div>
+
+      <!-- Qué incluye -->
+      <span class="form-section-title" style="margin-top:4px">¿Qué incluye?</span>
+      <div class="form-group">
+        <label>Contenido de la caja (uno por línea)</label>
+        <textarea id="f-includes" placeholder="Audífonos&#10;Cable USB-C&#10;Estuche rígido" style="min-height:80px"></textarea>
+      </div>
+
+      <!-- Imágenes -->
+      <span class="form-section-title" style="margin-top:4px">Imágenes del producto</span>
+      <div class="form-group">
+        <label>Agregar imagen (URL)</label>
+        <div class="image-manager">
+          <div class="image-add-row">
+            <input type="url" id="img-url-input" placeholder="https://ejemplo.com/imagen.jpg" onkeydown="if(event.key==='Enter'){event.preventDefault();addImage()}">
+            <button class="btn btn-outline btn-sm" onclick="addImage()">+ Agregar</button>
+          </div>
+          <div id="images-preview" class="images-grid">
+            <p class="no-images">No hay imágenes. Agregá la URL de una foto para el producto.</p>
+          </div>
+          <p style="font-size:11px;color:var(--gray-400);margin-top:10px">💡 Hacé clic en "Portada" para definir la imagen principal del producto.</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProduct()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar Producto
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CONFIRM DELETE ─── -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <h3>¿Eliminar producto?</h3>
+    <p id="confirm-msg">Esta acción no se puede deshacer.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN TOAST -->
+<div class="admin-toast" id="admin-toast"><span id="admin-toast-icon">✓</span><span id="admin-toast-msg">Guardado</span></div>
+
+<script>
+// ══════════════════════════════════════════
+//  DATA & STATE
+// ══════════════════════════════════════════
+const DEFAULT_PRODUCTS = [
+  { id:'beats-studio-pro', name:'Beats Studio Pro', category:'audifonos', categoryLabel:'Audífonos', price:220, emoji:'🎧', condition:'new', badge:'Destacado', badgeType:'gold', inStock:true, desc:'Audífonos over-ear con cancelación de ruido activa personalizada, sonido espacial y hasta 40 horas de batería.', features:['Cancelación de ruido activa personalizada (ANC)','Hasta 40 horas de batería con ANC activado','Sonido espacial con seguimiento de cabeza dinámico','Compatible con Apple y Android','Carga rápida: 10 min = 4 horas'], includes:['Audífonos Beats Studio Pro','Cable USB-C a 3.5mm','Cable USB-C a USB-C','Estuche rígido'], images:[] },
+  { id:'ps4-liberada', name:'PlayStation 4 Liberada', category:'consolas', categoryLabel:'Consolas', price:220, emoji:'🎮', condition:'used', badge:'Usado', badgeType:'used', inStock:true, desc:'PlayStation 4 liberada y lista para jugar. Consola en excelente estado, verificada antes de la venta.', features:['Liberada — compatible con todos los juegos','Almacenamiento 500GB','Wi-Fi integrado','Probada y verificada'], includes:['Consola PS4','1 control DualShock 4','Cable HDMI','Cable de alimentación'], images:[] },
+  { id:'google-home', name:'Google Home', category:'smart', categoryLabel:'Smart Home', price:25, emoji:'🏠', condition:'new', badge:'Destacado', badgeType:'gold', inStock:true, desc:'Bocina inteligente con Google Assistant. Controlá tu hogar, reproducí música y más con tu voz.', features:['Google Assistant integrado','Control de dispositivos inteligentes','Reproducción de música Spotify, YouTube Music','Alarmas y recordatorios'], includes:['Google Home','Adaptador de alimentación','Guía de inicio rápido'], images:[] },
+  { id:'google-nest-hub', name:'Google Nest Hub 2da Gen', category:'smart', categoryLabel:'Smart Home', price:70, emoji:'📱', condition:'new', badge:'Destacado', badgeType:'gold', inStock:true, desc:'Centro de control para hogar inteligente con pantalla táctil de 7 pulgadas y sensor de sueño.', features:['Pantalla táctil 7 pulgadas','Google Assistant integrado','Sensor de sueño sin wearable','YouTube, Spotify, Google Fotos'], includes:['Google Nest Hub 2da Gen','Cable de alimentación'], images:[] },
+  { id:'jbl-charge5', name:'JBL Charge 5', category:'bocinas', categoryLabel:'Bocinas Portátiles', price:95, emoji:'🔊', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Bocina Bluetooth portátil IP67 con 20 horas de batería y función de carga de dispositivos.', features:['IP67 resistente al agua y polvo','20 horas de batería','Carga de dispositivos externos','JBL PartyBoost'], includes:['Bocina JBL Charge 5','Cable USB-C'], images:[] },
+  { id:'anker-powerbank', name:'Anker PowerCore 20000', category:'baterias', categoryLabel:'Baterías Portátiles', price:42, emoji:'🔋', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Batería portátil de 20,000mAh. Cargá tu teléfono hasta 5 veces.', features:['20,000mAh de capacidad','Carga hasta 5 veces tu celular','2 puertos USB-A + 1 USB-C'], includes:['PowerCore 20000','Cable micro USB'], images:[] },
+  { id:'tp-link-deco', name:'TP-Link Deco M4 (×2)', category:'redes', categoryLabel:'Redes / Mesh', price:75, emoji:'📡', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Sistema WiFi Mesh doble banda. Cubre hasta 260m² con señal fuerte en toda la casa.', features:['Cobertura 260m² con 2 unidades','Doble banda AC1200','Roaming inteligente','Control parental'], includes:['2 unidades Deco M4','2 cables Ethernet','2 adaptadores'], images:[] },
+  { id:'auto-rc-offroad', name:'Auto RC Off-Road 4x4', category:'otros', categoryLabel:'Otros', price:45, emoji:'🚗', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Auto a control remoto 4x4 con tracción total para terrenos difíciles.', features:['Tracción 4x4','Velocidad máxima 30 km/h','Control 2.4GHz hasta 80m','Batería recargable'], includes:['Auto RC 4x4','Control remoto','Batería','Cargador USB'], images:[] },
+  { id:'drone-mini', name:'Drone Mini HD', category:'otros', categoryLabel:'Otros', price:65, emoji:'🚁', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Drone compacto con cámara HD, hover automático y control WiFi desde tu celular.', features:['Cámara HD 720p','Hover automático','Control app Android/iOS','15 min de vuelo por carga'], includes:['Drone Mini HD','Control remoto','2 baterías','Hélices de repuesto'], images:[] }
+];
+
+const CAT_LABELS = { audifonos:'Audífonos', consolas:'Consolas', bocinas:'Bocinas Portátiles', smart:'Smart Home', accesorios:'Accesorios de Consola', baterias:'Baterías Portátiles', redes:'Redes / Mesh', otros:'Otros' };
+
+let products = [];
+let editingId = null;
+let deletingId = null;
+let modalImages = [];
+
+// ══ LOAD ══
+function loadProducts() {
+  try {
+    const s = localStorage.getItem('audiz_catalog');
+    products = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+  } catch(e) { products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)); }
+}
+
+function saveProducts() {
+  localStorage.setItem('audiz_catalog', JSON.stringify(products));
+  document.getElementById('save-status').textContent = '✓ Guardado ' + new Date().toLocaleTimeString('es-NI', {hour:'2-digit',minute:'2-digit'});
+  renderAll();
+}
+
+// ══ INIT ══
+window.addEventListener('DOMContentLoaded', () => {
+  loadProducts();
+  renderAll();
+});
+
+function renderAll() {
+  renderStats();
+  renderTable(products);
+  renderStockTable();
+}
+
+// ══ STATS ══
+function renderStats() {
+  const total = products.length;
+  const inStock = products.filter(p => p.inStock).length;
+  const outStock = total - inStock;
+  const cats = new Set(products.map(p => p.category)).size;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><p class="stat-label">Total productos</p><p class="stat-value">${total}</p><p class="stat-sub">en el catálogo</p></div>
+    <div class="stat-card"><p class="stat-label">En stock</p><p class="stat-value" style="color:var(--green)">${inStock}</p><p class="stat-sub">disponibles</p></div>
+    <div class="stat-card"><p class="stat-label">Agotados</p><p class="stat-value" style="color:var(--red)">${outStock}</p><p class="stat-sub">fuera de stock</p></div>
+    <div class="stat-card"><p class="stat-label">Categorías</p><p class="stat-value">${cats}</p><p class="stat-sub">activas</p></div>`;
+}
+
+// ══ TABLE ══
+function renderTable(data) {
+  const tbody = document.getElementById('table-body');
+  if (!data.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No hay productos. Agregá el primero.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(p => {
+    const cover = p.images && p.images.length > 0 ? (p.images.find(i => i.isCover) || p.images[0]) : null;
+    const thumb = cover ? `<img src="${cover.url}" alt="${p.name}">` : p.emoji;
+    const stockBadge = p.inStock ? `<span class="badge badge-green"><span class="badge-dot"></span>En stock</span>` : `<span class="badge badge-red"><span class="badge-dot"></span>Agotado</span>`;
+    const condBadge = p.condition === 'new' ? `<span class="badge badge-gray">Nuevo</span>` : `<span class="badge badge-gold">Usado</span>`;
+    return `
+    <tr>
+      <td>
+        <div class="product-name-cell">
+          <div class="product-thumb-cell">${thumb}</div>
+          <div>
+            <p class="product-name-text">${p.name}</p>
+            <p class="product-id-text">#${p.id}</p>
+          </div>
+        </div>
+      </td>
+      <td>${CAT_LABELS[p.category] || p.category}</td>
+      <td><strong>$${parseFloat(p.price).toFixed(2)}</strong></td>
+      <td>${condBadge}</td>
+      <td>${stockBadge}</td>
+      <td><span class="badge badge-gray">${(p.images||[]).length} foto${(p.images||[]).length!==1?'s':''}</span></td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-outline btn-sm btn-icon" onclick="toggleStock('${p.id}')" title="${p.inStock?'Marcar agotado':'Poner en stock'}">
+            ${p.inStock ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10m6.36-5.36a9 9 0 1 1-12.73 0"/></svg>'}
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="openEditModal('${p.id}')">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="askDelete('${p.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable() {
+  const q = document.getElementById('table-search').value.toLowerCase();
+  const cat = document.getElementById('cat-filter').value;
+  const stock = document.getElementById('stock-filter').value;
+  const filtered = products.filter(p => {
+    const matchQ = !q || p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q);
+    const matchCat = !cat || p.category === cat;
+    const matchStock = !stock || (stock === 'in' && p.inStock) || (stock === 'out' && !p.inStock);
+    return matchQ && matchCat && matchStock;
+  });
+  renderTable(filtered);
+}
+
+// ══ STOCK TABLE ══
+function renderStockTable() {
+  const tbody = document.getElementById('stock-table-body');
+  tbody.innerHTML = products.map(p => `
+    <tr>
+      <td>
+        <div class="product-name-cell">
+          <div class="product-thumb-cell">${p.images?.length ? `<img src="${(p.images.find(i=>i.isCover)||p.images[0]).url}" alt="${p.name}">` : p.emoji}</div>
+          <p class="product-name-text">${p.name}</p>
+        </div>
+      </td>
+      <td>${CAT_LABELS[p.category] || p.category}</td>
+      <td>$${parseFloat(p.price).toFixed(2)}</td>
+      <td>${p.inStock ? '<span class="badge badge-green"><span class="badge-dot"></span>En stock</span>' : '<span class="badge badge-red"><span class="badge-dot"></span>Agotado</span>'}</td>
+      <td style="text-align:right">
+        <button class="btn ${p.inStock?'btn-danger':'btn-success'} btn-sm" onclick="toggleStock('${p.id}')">
+          ${p.inStock ? '⛔ Marcar agotado' : '✅ Poner en stock'}
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+// ══ TOGGLE STOCK ══
+function toggleStock(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  p.inStock = !p.inStock;
+  saveProducts();
+  toast(p.inStock ? `✅ "${p.name}" disponible` : `⛔ "${p.name}" marcado agotado`);
+}
+
+// ══ MODAL — IMAGES ══
+function renderImagePreview() {
+  const container = document.getElementById('images-preview');
+  if (!modalImages.length) {
+    container.innerHTML = '<p class="no-images">No hay imágenes. Agregá la URL de una foto.</p>';
+    return;
+  }
+  container.innerHTML = modalImages.map((img, idx) => `
+    <div class="img-item ${img.isCover ? 'cover' : ''}">
+      ${img.isCover ? '<span class="img-cover-badge">Portada</span>' : ''}
+      <img src="${img.url}" alt="img ${idx+1}" onerror="this.style.background='#f4f4f4';this.alt='Error al cargar'">
+      <div class="img-item-actions">
+        ${!img.isCover ? `<button class="img-action-btn" onclick="setCover(${idx})">Portada</button>` : ''}
+        <button class="img-action-btn danger" onclick="removeImage(${idx})">Quitar</button>
+      </div>
+    </div>`).join('');
+}
+
+function addImage() {
+  const input = document.getElementById('img-url-input');
+  const url = input.value.trim();
+  if (!url) return;
+  if (!url.startsWith('http')) { toast('⚠️ Ingresá una URL válida (debe empezar con http)', true); return; }
+  if (modalImages.find(i => i.url === url)) { toast('⚠️ Esa imagen ya está agregada', true); return; }
+  const isCover = modalImages.length === 0;
+  modalImages.push({ url, isCover });
+  input.value = '';
+  renderImagePreview();
+}
+
+function setCover(idx) {
+  modalImages.forEach((img, i) => img.isCover = i === idx);
+  renderImagePreview();
+}
+
+function removeImage(idx) {
+  const wasCover = modalImages[idx].isCover;
+  modalImages.splice(idx, 1);
+  if (wasCover && modalImages.length > 0) modalImages[0].isCover = true;
+  renderImagePreview();
+}
+
+// ══ MODAL OPEN/CLOSE ══
+function openAddModal() {
+  editingId = null;
+  modalImages = [];
+  document.getElementById('modal-title').textContent = 'Agregar Producto';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-price').value = '';
+  document.getElementById('f-category').value = 'audifonos';
+  document.getElementById('f-condition').value = 'new';
+  document.getElementById('f-emoji').value = '🎧';
+  document.getElementById('f-badge').value = 'Nuevo|';
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-features').value = '';
+  document.getElementById('f-includes').value = '';
+  document.getElementById('f-instock').checked = true;
+  document.getElementById('img-url-input').value = '';
+  renderImagePreview();
+  document.getElementById('product-modal').classList.add('open');
+  setTimeout(() => document.getElementById('f-name').focus(), 200);
+}
+
+function openEditModal(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  modalImages = JSON.parse(JSON.stringify(p.images || []));
+  document.getElementById('modal-title').textContent = 'Editar Producto';
+  document.getElementById('f-name').value = p.name;
+  document.getElementById('f-price').value = p.price;
+  document.getElementById('f-category').value = p.category;
+  document.getElementById('f-condition').value = p.condition;
+  document.getElementById('f-emoji').value = p.emoji || '📦';
+  const badgeVal = p.badge ? `${p.badge}|${p.badgeType||''}` : '';
+  document.getElementById('f-badge').value = badgeVal;
+  document.getElementById('f-desc').value = p.desc;
+  document.getElementById('f-features').value = (p.features || []).join('\n');
+  document.getElementById('f-includes').value = (p.includes || []).join('\n');
+  document.getElementById('f-instock').checked = p.inStock !== false;
+  document.getElementById('img-url-input').value = '';
+  renderImagePreview();
+  document.getElementById('product-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('product-modal').classList.remove('open');
+  editingId = null;
+  modalImages = [];
+}
+
+// ══ SAVE ══
+function saveProduct() {
+  const name = document.getElementById('f-name').value.trim();
+  const price = parseFloat(document.getElementById('f-price').value);
+  const category = document.getElementById('f-category').value;
+  const condition = document.getElementById('f-condition').value;
+  const emoji = document.getElementById('f-emoji').value.trim() || '📦';
+  const badgeRaw = document.getElementById('f-badge').value;
+  const desc = document.getElementById('f-desc').value.trim();
+  const featuresRaw = document.getElementById('f-features').value.trim();
+  const includesRaw = document.getElementById('f-includes').value.trim();
+  const inStock = document.getElementById('f-instock').checked;
+
+  if (!name) { toast('⚠️ El nombre es obligatorio', true); return; }
+  if (isNaN(price) || price < 0) { toast('⚠️ El precio no es válido', true); return; }
+  if (!desc) { toast('⚠️ La descripción es obligatoria', true); return; }
+
+  const [badge, badgeType] = badgeRaw ? badgeRaw.split('|') : ['', ''];
+  const features = featuresRaw ? featuresRaw.split('\n').map(f => f.trim()).filter(Boolean) : [];
+  const includes = includesRaw ? includesRaw.split('\n').map(i => i.trim()).filter(Boolean) : [];
+  const categoryLabel = CAT_LABELS[category] || category;
+
+  if (editingId) {
+    const idx = products.findIndex(x => x.id === editingId);
+    if (idx === -1) return;
+    products[idx] = { ...products[idx], name, price, category, categoryLabel, condition, emoji, badge: badge||'', badgeType: badgeType||'', desc, features, includes, inStock, images: modalImages };
+    toast(`✅ "${name}" actualizado correctamente`);
+  } else {
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
+    products.push({ id, name, price, category, categoryLabel, condition, emoji, badge: badge||'', badgeType: badgeType||'', desc, features, includes, inStock, images: modalImages });
+    toast(`✅ "${name}" agregado al catálogo`);
+  }
+
+  saveProducts();
+  closeModal();
+}
+
+function updateCategoryLabel() {
+  // visual only — label computed on save
+}
+
+// ══ DELETE ══
+function askDelete(id) {
+  const p = products.find(x => x.id === id);
+  deletingId = id;
+  document.getElementById('confirm-msg').textContent = `¿Querés eliminar "${p?.name}"? Esta acción no se puede deshacer.`;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  deletingId = null;
+}
+
+function confirmDelete() {
+  if (!deletingId) return;
+  const p = products.find(x => x.id === deletingId);
+  products = products.filter(x => x.id !== deletingId);
+  saveProducts();
+  closeConfirm();
+  toast(`🗑️ "${p?.name}" eliminado`);
+}
+
+// ══ SECTIONS ══
+function showSection(name) {
+  document.getElementById('section-products').style.display = name === 'products' ? 'block' : 'none';
+  document.getElementById('section-stock').style.display = name === 'stock' ? 'block' : 'none';
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`nav-${name}`);
+  if (btn) btn.classList.add('active');
+  const titles = { products:'Catálogo de Productos', stock:'Gestión de Stock' };
+  document.getElementById('section-title').textContent = titles[name] || 'Panel';
+  if (name === 'stock') renderStockTable();
+}
+
+// ══ EXPORT / IMPORT ══
+function exportCatalog() {
+  const data = JSON.stringify(products, null, 2);
+  const blob = new Blob([data], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `audiz-catalogo-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📦 Catálogo exportado');
+}
+
+function importCatalog(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('Formato inválido');
+      products = data;
+      saveProducts();
+      toast(`✅ ${data.length} productos importados`);
+    } catch(err) {
+      toast('❌ Error al importar. Verificá el formato JSON.', true);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetToDefault() {
+  if (!confirm('¿Restablecer el catálogo a los productos por defecto? Se perderán los cambios actuales.')) return;
+  products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+  saveProducts();
+  toast('🔄 Catálogo restablecido');
+}
+
+// ══ TOAST ══
+function toast(msg, isError = false) {
+  const t = document.getElementById('admin-toast');
+  document.getElementById('admin-toast-msg').textContent = msg;
+  t.style.background = isError ? 'var(--red)' : 'var(--black)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// Close modal on overlay click
+document.getElementById('product-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+</script>
+</body>
+</html>

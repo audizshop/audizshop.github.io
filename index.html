@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUDIZ — Tecnología a Buen Precio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #fafafa;
+    --gray-100: #f4f4f4;
+    --gray-200: #e8e8e8;
+    --gray-400: #999;
+    --gray-600: #555;
+    --accent: #c8a96e;
+    --accent-dark: #a08548;
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --radius: 2px;
+    --transition: 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-body); background: var(--white); color: var(--black); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+
+  /* NAV */
+  nav { position: fixed; top:0; left:0; right:0; z-index:1000; background:rgba(250,250,250,0.93); backdrop-filter:blur(20px); border-bottom:1px solid var(--gray-200); }
+  .nav-inner { max-width:1440px; margin:0 auto; padding:0 40px; height:64px; display:flex; align-items:center; }
+  .logo { font-family:var(--font-display); font-size:22px; font-weight:700; letter-spacing:0.14em; color:var(--black); cursor:pointer; text-decoration:none; margin-right:auto; flex-shrink:0; }
+  .nav-categories { display:flex; gap:0; list-style:none; margin:0 24px; }
+  .nav-categories li a { display:block; padding:0 12px; height:64px; line-height:64px; font-size:12px; font-weight:500; letter-spacing:0.07em; text-transform:uppercase; color:var(--gray-600); text-decoration:none; transition:color var(--transition); cursor:pointer; white-space:nowrap; }
+  .nav-categories li a:hover { color:var(--black); }
+  .nav-categories li a.active { color:var(--black); border-bottom:2px solid var(--black); }
+  .nav-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .nav-btn { width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; border-radius:50%; color:var(--black); transition:background var(--transition); position:relative; }
+  .nav-btn:hover { background:var(--gray-100); }
+  .cart-badge { position:absolute; top:6px; right:6px; width:16px; height:16px; background:var(--black); color:var(--white); border-radius:50%; font-size:9px; font-weight:600; display:flex; align-items:center; justify-content:center; opacity:0; transform:scale(0); transition:var(--transition); }
+  .cart-badge.show { opacity:1; transform:scale(1); }
+
+  /* SEARCH OVERLAY */
+  .search-overlay { position:fixed; inset:0; background:rgba(10,10,10,0.88); backdrop-filter:blur(14px); z-index:2000; display:flex; flex-direction:column; align-items:center; padding-top:120px; opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
+  .search-overlay.open { opacity:1; pointer-events:all; }
+  .search-input-wrap { width:100%; max-width:680px; padding:0 20px; position:relative; }
+  .search-input { width:100%; background:transparent; border:none; border-bottom:2px solid var(--white); padding:16px 48px 16px 0; font-family:var(--font-display); font-size:36px; color:var(--white); outline:none; caret-color:var(--accent); }
+  .search-input::placeholder { color:rgba(255,255,255,0.3); }
+  .search-close { position:absolute; right:20px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--white); cursor:pointer; font-size:28px; line-height:1; }
+  .search-results { width:100%; max-width:680px; padding:20px 20px 0; display:flex; flex-direction:column; gap:2px; max-height:400px; overflow-y:auto; }
+  .search-result-item { display:flex; align-items:center; gap:16px; padding:14px 16px; background:rgba(255,255,255,0.06); border-radius:var(--radius); cursor:pointer; transition:background 0.2s; border:1px solid rgba(255,255,255,0.08); }
+  .search-result-item:hover { background:rgba(255,255,255,0.13); }
+  .search-result-img { width:48px; height:48px; object-fit:contain; border-radius:4px; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; overflow:hidden; }
+  .search-result-img img { width:100%; height:100%; object-fit:cover; }
+  .search-result-info { flex:1; }
+  .search-result-name { color:var(--white); font-weight:500; font-size:14px; }
+  .search-result-cat { color:rgba(255,255,255,0.45); font-size:12px; margin-top:2px; }
+  .search-result-price { color:var(--accent); font-weight:600; font-size:14px; flex-shrink:0; }
+  .search-hint { color:rgba(255,255,255,0.3); font-size:13px; margin-top:24px; letter-spacing:0.04em; }
+
+  /* CART DRAWER */
+  .cart-overlay { position:fixed; inset:0; background:rgba(10,10,10,0.5); z-index:1500; opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
+  .cart-overlay.open { opacity:1; pointer-events:all; }
+  .cart-drawer { position:fixed; top:0; right:0; bottom:0; width:420px; max-width:100vw; background:var(--white); z-index:1600; display:flex; flex-direction:column; transform:translateX(100%); transition:transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94); box-shadow:-20px 0 60px rgba(0,0,0,0.12); }
+  .cart-drawer.open { transform:translateX(0); }
+  .cart-header { padding:28px 32px 20px; border-bottom:1px solid var(--gray-200); display:flex; align-items:center; justify-content:space-between; }
+  .cart-title { font-family:var(--font-display); font-size:20px; font-weight:600; }
+  .cart-close-btn { background:none; border:none; cursor:pointer; font-size:22px; color:var(--gray-600); width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:background var(--transition); }
+  .cart-close-btn:hover { background:var(--gray-100); }
+  .cart-items { flex:1; overflow-y:auto; padding:16px 0; }
+  .cart-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--gray-400); gap:12px; }
+  .cart-empty-icon { font-size:48px; }
+  .cart-empty-text { font-size:14px; letter-spacing:0.04em; }
+  .cart-item { display:flex; align-items:center; gap:16px; padding:16px 32px; border-bottom:1px solid var(--gray-100); animation:slideIn 0.3s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+  .cart-item-thumb { width:56px; height:56px; background:var(--gray-100); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; overflow:hidden; }
+  .cart-item-thumb img { width:100%; height:100%; object-fit:cover; border-radius:4px; }
+  .cart-item-info { flex:1; min-width:0; }
+  .cart-item-name { font-size:13.5px; font-weight:500; line-height:1.3; }
+  .cart-item-variant { font-size:11.5px; color:var(--gray-400); margin-top:2px; }
+  .cart-item-controls { display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0; }
+  .cart-item-price { font-size:14px; font-weight:600; }
+  .qty-controls { display:flex; align-items:center; border:1px solid var(--gray-200); border-radius:2px; overflow:hidden; }
+  .qty-btn { width:28px; height:28px; background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--black); transition:background 0.2s; }
+  .qty-btn:hover { background:var(--gray-100); }
+  .qty-num { width:28px; text-align:center; font-size:13px; font-weight:500; }
+  .remove-btn { background:none; border:none; cursor:pointer; color:var(--gray-400); font-size:11px; text-decoration:underline; transition:color 0.2s; }
+  .remove-btn:hover { color:#c00; }
+  .cart-footer { padding:20px 32px 32px; border-top:1px solid var(--gray-200); }
+  .cart-subtotal { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .cart-subtotal-label { font-size:13px; color:var(--gray-600); text-transform:uppercase; letter-spacing:0.08em; }
+  .cart-subtotal-amount { font-family:var(--font-display); font-size:22px; font-weight:600; }
+  .cart-note { font-size:11.5px; color:var(--gray-400); margin-bottom:20px; line-height:1.5; }
+  .btn-checkout { width:100%; padding:16px; background:var(--black); color:var(--white); border:none; border-radius:var(--radius); font-family:var(--font-body); font-size:13px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:background var(--transition), transform 0.15s; }
+  .btn-checkout:hover { background:#1a1a1a; transform:translateY(-1px); }
+
+  /* PAGES */
+  .page { display:none; min-height:100vh; }
+  .page.active { display:block; }
+
+  /* HERO */
+  .hero { padding-top:64px; height:100vh; display:grid; grid-template-columns:1fr 1fr; position:relative; overflow:hidden; }
+  .hero-text { display:flex; flex-direction:column; justify-content:center; padding:80px 60px 80px 80px; position:relative; z-index:2; }
+  .hero-eyebrow { font-size:11px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:24px; }
+  .hero-headline { font-family:var(--font-display); font-size:clamp(38px,4.2vw,68px); font-weight:700; line-height:1.08; letter-spacing:-0.02em; margin-bottom:28px; }
+  .hero-sub { font-size:15px; color:var(--gray-600); max-width:380px; line-height:1.7; margin-bottom:48px; }
+  .btn-primary { display:inline-flex; align-items:center; gap:10px; padding:14px 32px; background:var(--black); color:var(--white); text-decoration:none; font-size:12.5px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; border-radius:var(--radius); cursor:pointer; border:2px solid var(--black); transition:all var(--transition); width:fit-content; }
+  .btn-primary:hover { background:transparent; color:var(--black); }
+  .btn-outline { display:inline-flex; align-items:center; gap:10px; padding:14px 32px; background:transparent; color:var(--black); text-decoration:none; font-size:12.5px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; border-radius:var(--radius); cursor:pointer; border:2px solid var(--black); transition:all var(--transition); width:fit-content; }
+  .btn-outline:hover { background:var(--black); color:var(--white); }
+  .hero-visual { background:var(--gray-100); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+  .hero-visual::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 60% 40%,rgba(200,169,110,0.14) 0%,transparent 70%); }
+  .hero-img { width:60%; max-width:340px; height:60%; max-height:340px; object-fit:contain; filter:drop-shadow(0 40px 60px rgba(0,0,0,0.15)); animation:float 6s ease-in-out infinite; }
+  .hero-emoji { font-size:160px; animation:float 6s ease-in-out infinite; filter:drop-shadow(0 40px 60px rgba(0,0,0,0.12)); }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-18px) rotate(3deg)} }
+
+  /* MARQUEE */
+  .marquee-section { background:var(--black); color:var(--white); padding:18px 0; overflow:hidden; }
+  .marquee-track { display:flex; gap:64px; animation:marquee 28s linear infinite; white-space:nowrap; }
+  .marquee-item { font-size:11px; letter-spacing:0.18em; text-transform:uppercase; opacity:0.6; flex-shrink:0; display:flex; align-items:center; gap:16px; }
+  .marquee-dot { width:4px; height:4px; background:var(--accent); border-radius:50%; flex-shrink:0; }
+  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  /* SECTIONS */
+  .section { padding:100px 80px; max-width:1440px; margin:0 auto; }
+  .section-sm { padding:60px 80px; max-width:1440px; margin:0 auto; }
+  .section-label { font-size:10.5px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; color:var(--gray-400); margin-bottom:12px; }
+  .section-title { font-family:var(--font-display); font-size:clamp(28px,3vw,44px); font-weight:600; letter-spacing:-0.02em; margin-bottom:52px; }
+  .section-title span { color:var(--accent); }
+
+  /* OUT OF STOCK OVERLAY */
+  .out-of-stock-banner { background:rgba(0,0,0,0.65); position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:3; }
+  .out-of-stock-label { background:var(--black); color:var(--white); padding:8px 18px; font-size:11px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; border-radius:1px; }
+
+  /* PRODUCTS GRID */
+  .products-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:2px; }
+  .product-card { background:var(--white); cursor:pointer; border:1px solid var(--gray-200); transition:all var(--transition); position:relative; overflow:hidden; animation:fadeUp 0.5s ease both; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .product-card:hover { border-color:var(--black); transform:translateY(-4px); box-shadow:0 20px 50px rgba(0,0,0,0.1); z-index:2; }
+  .product-card.out-of-stock { opacity:0.75; }
+  .product-img-wrap { aspect-ratio:1/1; background:var(--gray-100); display:flex; align-items:center; justify-content:center; font-size:80px; transition:transform var(--transition); position:relative; overflow:hidden; }
+  .product-img-wrap img { width:100%; height:100%; object-fit:cover; }
+  .product-card:hover .product-img-wrap { transform:scale(1.02); }
+  .product-badge { position:absolute; top:16px; left:16px; padding:4px 10px; background:var(--black); color:var(--white); font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; border-radius:1px; z-index:2; }
+  .product-badge.gold { background:var(--accent); }
+  .product-badge.used { background:var(--gray-600); }
+  .product-info { padding:20px 24px 24px; border-top:1px solid var(--gray-200); }
+  .product-category { font-size:10.5px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
+  .product-name { font-family:var(--font-display); font-size:18px; font-weight:600; letter-spacing:-0.01em; margin-bottom:8px; line-height:1.2; }
+  .product-desc { font-size:12.5px; color:var(--gray-600); line-height:1.5; margin-bottom:16px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .product-footer { display:flex; align-items:center; justify-content:space-between; }
+  .product-price { font-size:17px; font-weight:600; letter-spacing:-0.01em; }
+  .product-add { width:36px; height:36px; background:var(--black); color:var(--white); border:none; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:20px; transition:background var(--transition), transform 0.15s; line-height:1; }
+  .product-add:hover { background:var(--accent-dark); transform:scale(1.1); }
+  .product-add:disabled { background:var(--gray-200); cursor:not-allowed; transform:none; }
+
+  /* CATS GRID */
+  .cats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; }
+  .cat-card { background:var(--gray-100); aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; cursor:pointer; transition:all var(--transition); border:1px solid transparent; position:relative; overflow:hidden; }
+  .cat-card::after { content:''; position:absolute; inset:0; background:var(--black); opacity:0; transition:opacity var(--transition); }
+  .cat-card:hover::after { opacity:0.05; }
+  .cat-card:hover { border-color:var(--black); }
+  .cat-emoji { font-size:40px; position:relative; z-index:1; }
+  .cat-label { font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; position:relative; z-index:1; color:var(--black); text-align:center; padding:0 8px; }
+
+  /* BANNER */
+  .banner { background:var(--black); color:var(--white); padding:80px; display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:60px; }
+  .banner-eyebrow { font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase; color:var(--accent); margin-bottom:20px; }
+  .banner-headline { font-family:var(--font-display); font-size:clamp(32px,3vw,52px); font-weight:600; line-height:1.1; letter-spacing:-0.02em; margin-bottom:20px; }
+  .banner-sub { font-size:14px; color:rgba(255,255,255,0.55); line-height:1.7; margin-bottom:36px; max-width:400px; }
+  .btn-white { display:inline-flex; align-items:center; gap:10px; padding:14px 32px; background:var(--white); color:var(--black); font-size:12.5px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; border-radius:var(--radius); cursor:pointer; border:2px solid var(--white); transition:all var(--transition); text-decoration:none; }
+  .btn-white:hover { background:transparent; color:var(--white); }
+  .banner-visual { display:flex; align-items:center; justify-content:center; font-size:120px; }
+
+  /* FEATURES */
+  .features-strip { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--gray-200); border-left:1px solid var(--gray-200); }
+  .feature-item { padding:48px 40px; border-right:1px solid var(--gray-200); border-bottom:1px solid var(--gray-200); }
+  .feature-icon { font-size:28px; margin-bottom:16px; }
+  .feature-title { font-family:var(--font-display); font-size:18px; font-weight:600; margin-bottom:10px; }
+  .feature-desc { font-size:13px; color:var(--gray-600); line-height:1.6; }
+
+  /* PRODUCT DETAIL */
+  #page-product { padding-top:64px; }
+  .product-detail-grid { display:grid; grid-template-columns:1fr 1fr; min-height:calc(100vh - 64px); }
+  .product-detail-gallery { background:var(--gray-100); display:flex; flex-direction:column; align-items:center; justify-content:center; position:sticky; top:64px; height:calc(100vh - 64px); gap:16px; padding:40px; overflow:hidden; }
+  .pd-main-img { width:100%; max-width:360px; height:360px; object-fit:contain; font-size:140px; display:flex; align-items:center; justify-content:center; transition:opacity 0.3s; }
+  .pd-main-emoji { font-size:140px; display:flex; align-items:center; justify-content:center; animation:float 6s ease-in-out infinite; }
+  .pd-thumbs { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .pd-thumb { width:52px; height:52px; border:2px solid transparent; border-radius:4px; overflow:hidden; cursor:pointer; background:rgba(255,255,255,0.7); transition:border-color 0.2s; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .pd-thumb.active { border-color:var(--black); }
+  .pd-thumb img { width:100%; height:100%; object-fit:cover; }
+  .product-detail-info { padding:80px 60px; }
+  .pd-back { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--gray-400); cursor:pointer; border:none; background:none; margin-bottom:40px; transition:color 0.2s; }
+  .pd-back:hover { color:var(--black); }
+  .pd-category { font-size:11px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  .pd-name { font-family:var(--font-display); font-size:clamp(30px,3vw,50px); font-weight:700; line-height:1.08; letter-spacing:-0.02em; margin-bottom:16px; }
+  .pd-price { font-size:28px; font-weight:600; margin-bottom:8px; }
+  .pd-condition { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border:1px solid var(--gray-200); border-radius:20px; font-size:11.5px; font-weight:500; color:var(--gray-600); margin-bottom:28px; }
+  .pd-condition .dot { width:7px; height:7px; border-radius:50%; background:#22c55e; }
+  .pd-condition.used .dot { background:var(--accent); }
+  .pd-oos-msg { background:#fee2e2; color:#991b1b; padding:12px 16px; border-radius:4px; font-size:13px; font-weight:500; margin-bottom:20px; }
+  .pd-desc { font-size:14.5px; color:var(--gray-600); line-height:1.75; margin-bottom:36px; border-top:1px solid var(--gray-200); padding-top:28px; }
+  .pd-add-row { display:flex; gap:12px; margin-bottom:36px; }
+  .pd-btn-cart { flex:1; padding:16px; background:var(--black); color:var(--white); border:2px solid var(--black); border-radius:var(--radius); font-family:var(--font-body); font-size:12.5px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; transition:all var(--transition); }
+  .pd-btn-cart:hover { background:transparent; color:var(--black); }
+  .pd-btn-cart:disabled { background:var(--gray-200); border-color:var(--gray-200); color:var(--gray-400); cursor:not-allowed; }
+  .pd-btn-wa { padding:16px 20px; background:#25D366; color:var(--white); border:2px solid #25D366; border-radius:var(--radius); font-size:20px; cursor:pointer; transition:all var(--transition); display:flex; align-items:center; justify-content:center; }
+  .pd-btn-wa:hover { background:#1da851; border-color:#1da851; }
+  .pd-section-title { font-size:11px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--gray-400); margin-bottom:16px; margin-top:36px; }
+  .pd-features { list-style:none; display:flex; flex-direction:column; gap:10px; }
+  .pd-features li { display:flex; align-items:flex-start; gap:12px; font-size:13.5px; color:var(--gray-600); line-height:1.5; }
+  .pd-features li::before { content:''; width:5px; height:5px; background:var(--accent); border-radius:50%; margin-top:7px; flex-shrink:0; }
+  .pd-includes { display:flex; flex-wrap:wrap; gap:8px; }
+  .pd-include-tag { padding:6px 14px; border:1px solid var(--gray-200); border-radius:20px; font-size:12px; color:var(--gray-600); }
+
+  /* CAT PAGE */
+  .cat-page-hero { padding-top:64px; background:var(--black); color:var(--white); padding:120px 80px 80px; display:grid; grid-template-columns:1fr auto; align-items:end; gap:40px; }
+  .cat-page-label { font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
+  .cat-page-title { font-family:var(--font-display); font-size:clamp(40px,5vw,72px); font-weight:700; letter-spacing:-0.02em; line-height:1.05; }
+  .cat-page-count { font-size:12px; color:rgba(255,255,255,0.4); white-space:nowrap; padding-bottom:8px; }
+  .cat-page-emoji { font-size:80px; align-self:center; }
+
+  /* ABOUT / SUPPORT */
+  .about-page { padding-top:64px; min-height:100vh; }
+  .about-hero { background:var(--black); color:var(--white); padding:120px 80px; text-align:center; }
+  .about-hero h1 { font-family:var(--font-display); font-size:clamp(40px,5vw,72px); font-weight:700; margin-bottom:24px; }
+  .about-hero p { font-size:16px; color:rgba(255,255,255,0.55); max-width:560px; margin:0 auto; line-height:1.7; }
+  .about-content { max-width:720px; margin:0 auto; padding:80px 40px; }
+  .about-content h2 { font-family:var(--font-display); font-size:28px; font-weight:600; margin-bottom:16px; margin-top:48px; }
+  .about-content p { font-size:15px; color:var(--gray-600); line-height:1.8; }
+  .support-page { padding-top:64px; }
+  .support-hero { background:var(--gray-100); padding:100px 80px 60px; text-align:center; }
+  .support-hero h1 { font-family:var(--font-display); font-size:52px; margin-bottom:16px; }
+  .support-hero p { color:var(--gray-600); max-width:500px; margin:0 auto; }
+  .support-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:2px; background:var(--gray-200); margin:40px; }
+  .support-card { background:var(--white); padding:48px 40px; text-align:center; cursor:pointer; transition:var(--transition); }
+  .support-card:hover { background:var(--gray-100); }
+  .support-card-icon { font-size:36px; margin-bottom:20px; }
+  .support-card h3 { font-family:var(--font-display); font-size:20px; margin-bottom:10px; }
+  .support-card p { font-size:13.5px; color:var(--gray-600); line-height:1.6; }
+
+  /* FOOTER */
+  footer { background:var(--black); color:var(--white); padding:60px 80px 40px; }
+  .footer-top { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; padding-bottom:48px; border-bottom:1px solid rgba(255,255,255,0.1); }
+  .footer-brand .logo-footer { font-family:var(--font-display); font-size:24px; font-weight:700; letter-spacing:0.14em; margin-bottom:16px; display:block; }
+  .footer-brand p { font-size:13px; color:rgba(255,255,255,0.45); line-height:1.7; max-width:260px; }
+  .footer-col h4 { font-size:10.5px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:20px; }
+  .footer-col ul { list-style:none; display:flex; flex-direction:column; gap:12px; }
+  .footer-col ul li a { font-size:13px; color:rgba(255,255,255,0.65); text-decoration:none; cursor:pointer; transition:color 0.2s; }
+  .footer-col ul li a:hover { color:var(--white); }
+  .footer-social { display:flex; gap:12px; margin-top:20px; }
+  .social-btn { width:40px; height:40px; border:1px solid rgba(255,255,255,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.6); cursor:pointer; text-decoration:none; font-size:16px; transition:all 0.2s; }
+  .social-btn:hover { border-color:var(--white); color:var(--white); background:rgba(255,255,255,0.08); }
+  .footer-bottom { display:flex; align-items:center; justify-content:space-between; padding-top:28px; }
+  .footer-copy { font-size:12px; color:rgba(255,255,255,0.3); }
+  .footer-legal { display:flex; gap:24px; }
+  .footer-legal a { font-size:12px; color:rgba(255,255,255,0.3); text-decoration:none; cursor:pointer; }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--black); color:var(--white); padding:14px 24px; border-radius:40px; font-size:13px; font-weight:500; display:flex; align-items:center; gap:10px; z-index:9999; opacity:0; transition:all 0.35s cubic-bezier(0.25,0.46,0.45,0.94); white-space:nowrap; pointer-events:none; box-shadow:0 8px 32px rgba(0,0,0,0.25); }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* EMPTY CAT */
+  .empty-cat { text-align:center; padding:80px 40px; color:var(--gray-400); }
+  .empty-cat-icon { font-size:48px; margin-bottom:16px; }
+  .empty-cat p { font-size:14px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--gray-200); border-radius:2px; }
+
+  /* RESPONSIVE */
+  @media(max-width:1100px) {
+    .nav-categories li a { padding:0 9px; font-size:11px; }
+    .footer-top { grid-template-columns:1fr 1fr; }
+    .cats-grid { grid-template-columns:repeat(2,1fr); }
+  }
+  @media(max-width:768px) {
+    .nav-categories { display:none; }
+    .hero { grid-template-columns:1fr; height:auto; }
+    .hero-visual { height:280px; }
+    .hero-text { padding:60px 24px 40px; }
+    .section, .section-sm { padding:60px 24px; }
+    .product-detail-grid { grid-template-columns:1fr; }
+    .product-detail-gallery { position:static; height:300px; }
+    .product-detail-info { padding:40px 24px; }
+    .features-strip { grid-template-columns:1fr; }
+    .support-cards { grid-template-columns:1fr; margin:20px; }
+    .banner { grid-template-columns:1fr; padding:48px 24px; }
+    .banner-visual { display:none; }
+    footer { padding:48px 24px 32px; }
+    .footer-top { grid-template-columns:1fr; gap:32px; }
+    .cat-page-hero { padding:80px 24px 48px; grid-template-columns:1fr; }
+    .cat-page-emoji { display:none; }
+    .about-hero { padding:80px 24px; }
+    .support-hero { padding:80px 24px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="logo" onclick="navigate('home')">AUDIZ</a>
+    <ul class="nav-categories">
+      <li><a onclick="navigate('cat','audifonos')">Audífonos</a></li>
+      <li><a onclick="navigate('cat','consolas')">Consolas</a></li>
+      <li><a onclick="navigate('cat','bocinas')">Bocinas</a></li>
+      <li><a onclick="navigate('cat','smart')">Smart Home</a></li>
+      <li><a onclick="navigate('cat','accesorios')">Accesorios</a></li>
+      <li><a onclick="navigate('cat','baterias')">Baterías</a></li>
+      <li><a onclick="navigate('cat','redes')">Redes</a></li>
+      <li><a onclick="navigate('cat','otros')">Otros</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="nav-btn" onclick="toggleSearch()" title="Buscar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
+      <button class="nav-btn" onclick="toggleCart()" title="Carrito">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="cart-badge" id="cart-badge">0</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- SEARCH -->
+<div class="search-overlay" id="search-overlay">
+  <div class="search-input-wrap">
+    <input type="text" class="search-input" id="search-input" placeholder="Buscar producto..." oninput="doSearch(this.value)" onkeydown="if(event.key==='Escape')toggleSearch()">
+    <button class="search-close" onclick="toggleSearch()">×</button>
+  </div>
+  <div class="search-results" id="search-results"></div>
+  <p class="search-hint" id="search-hint">Escribí para buscar · Esc para cerrar</p>
+</div>
+
+<!-- CART -->
+<div class="cart-overlay" id="cart-overlay" onclick="toggleCart()"></div>
+<div class="cart-drawer" id="cart-drawer">
+  <div class="cart-header">
+    <h2 class="cart-title">Tu Carrito</h2>
+    <button class="cart-close-btn" onclick="toggleCart()">×</button>
+  </div>
+  <div class="cart-items" id="cart-items">
+    <div class="cart-empty"><span class="cart-empty-icon">🛍️</span><span class="cart-empty-text">Tu carrito está vacío</span></div>
+  </div>
+  <div class="cart-footer" id="cart-footer" style="display:none">
+    <div class="cart-subtotal">
+      <span class="cart-subtotal-label">Total</span>
+      <span class="cart-subtotal-amount" id="cart-total">$0</span>
+    </div>
+    <p class="cart-note">Tu pedido se envía por WhatsApp. Te confirmamos disponibilidad y coordinamos la entrega.</p>
+    <button class="btn-checkout" onclick="checkoutWhatsapp()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.004 0C5.374 0 0 5.373 0 12c0 2.117.554 4.104 1.523 5.827L0 24l6.336-1.502A11.959 11.959 0 0 0 12.004 24C18.63 24 24 18.627 24 12S18.63 0 12.004 0zm0 21.818a9.826 9.826 0 0 1-5.001-1.367l-.36-.214-3.728.884.898-3.636-.234-.372A9.777 9.777 0 0 1 2.18 12c0-5.42 4.404-9.818 9.824-9.818 5.418 0 9.82 4.398 9.82 9.818 0 5.422-4.402 9.818-9.82 9.818z"/></svg>
+      Pedir por WhatsApp
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span>✓</span><span id="toast-msg">Agregado</span></div>
+
+<!-- HOME PAGE -->
+<div id="page-home" class="page">
+  <section class="hero">
+    <div class="hero-text">
+      <p class="hero-eyebrow">Tecnología al alcance de todos · León, Nicaragua</p>
+      <h1 class="hero-headline">Sonido,<br>juego<br>y conexión.</h1>
+      <p class="hero-sub">Audífonos, consolas, bocinas y todo lo que necesitás para llevar tu experiencia al siguiente nivel.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn-primary" onclick="navigate('cat','audifonos')">Ver Audífonos</button>
+        <button class="btn-outline" onclick="navigate('cat','consolas')">Ver Consolas</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <span class="hero-emoji">🎧</span>
+    </div>
+  </section>
+
+  <div class="marquee-section">
+    <div class="marquee-track" id="marquee-track">
+      <span class="marquee-item"><span class="marquee-dot"></span>Beats Studio Pro</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>PlayStation 4</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Google Home</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Google Nest Hub</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Bocinas Portátiles</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Baterías Portátiles</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Router Mesh</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Accesorios Gaming</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Beats Studio Pro</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>PlayStation 4</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Google Home</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Google Nest Hub</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Bocinas Portátiles</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Baterías Portátiles</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Router Mesh</span>
+      <span class="marquee-item"><span class="marquee-dot"></span>Accesorios Gaming</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="section-label">Productos Destacados</p>
+    <h2 class="section-title">Lo mejor <span>esta semana</span></h2>
+    <div class="products-grid" id="featured-grid"></div>
+  </div>
+
+  <div style="background:var(--gray-100);padding:80px">
+    <div style="max-width:1440px;margin:0 auto">
+      <p class="section-label">Categorías</p>
+      <h2 class="section-title" style="margin-bottom:40px">Explorá por categoría</h2>
+      <div class="cats-grid">
+        <div class="cat-card" onclick="navigate('cat','audifonos')"><span class="cat-emoji">🎧</span><span class="cat-label">Audífonos</span></div>
+        <div class="cat-card" onclick="navigate('cat','consolas')"><span class="cat-emoji">🎮</span><span class="cat-label">Consolas</span></div>
+        <div class="cat-card" onclick="navigate('cat','bocinas')"><span class="cat-emoji">🔊</span><span class="cat-label">Bocinas Portátiles</span></div>
+        <div class="cat-card" onclick="navigate('cat','smart')"><span class="cat-emoji">🏠</span><span class="cat-label">Smart Home</span></div>
+        <div class="cat-card" onclick="navigate('cat','accesorios')"><span class="cat-emoji">🕹️</span><span class="cat-label">Accesorios Consola</span></div>
+        <div class="cat-card" onclick="navigate('cat','baterias')"><span class="cat-emoji">🔋</span><span class="cat-label">Baterías Portátiles</span></div>
+        <div class="cat-card" onclick="navigate('cat','redes')"><span class="cat-emoji">📡</span><span class="cat-label">Redes / Mesh</span></div>
+        <div class="cat-card" onclick="navigate('cat','otros')"><span class="cat-emoji">📦</span><span class="cat-label">Otros</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner">
+    <div>
+      <p class="banner-eyebrow">Smart Home</p>
+      <h2 class="banner-headline">Tu hogar,<br>más inteligente.</h2>
+      <p class="banner-sub">Con Google Home y Google Nest Hub convertí tu espacio en un ecosistema conectado. Control total con tu voz.</p>
+      <button class="btn-white" onclick="navigate('cat','smart')">Ver Smart Home</button>
+    </div>
+    <div class="banner-visual">🏠</div>
+  </div>
+
+  <div class="features-strip">
+    <div class="feature-item">
+      <div class="feature-icon">💬</div>
+      <h3 class="feature-title">Atención directa</h3>
+      <p class="feature-desc">Pedís por WhatsApp y te respondemos al instante. Sin formularios, sin esperas.</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">✅</div>
+      <h3 class="feature-title">Productos verificados</h3>
+      <p class="feature-desc">Cada artículo pasa por revisión antes de publicarse. Te decimos el estado exacto.</p>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">📦</div>
+      <h3 class="feature-title">Enviamos a todo el país</h3>
+      <p class="feature-desc">Coordinamos la entrega en León. Rápido, seguro y sin complicaciones. También hacemos envíos a todo Nicaragua.</p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo-footer">AUDIZ</span>
+        <p>Tecnología a buen precio en Nicaragua. Audífonos, consolas, bocinas y más — todo lo que necesitás en un solo lugar.</p>
+        <div class="footer-social">
+          <a class="social-btn" href="https://instagram.com" target="_blank" title="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a class="social-btn" href="https://facebook.com" target="_blank" title="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+          <a class="social-btn" href="https://wa.me/50557178449" target="_blank" title="WhatsApp"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.004 0C5.374 0 0 5.373 0 12c0 2.117.554 4.104 1.523 5.827L0 24l6.336-1.502A11.959 11.959 0 0 0 12.004 24C18.63 24 24 18.627 24 12S18.63 0 12.004 0zm0 21.818a9.826 9.826 0 0 1-5.001-1.367l-.36-.214-3.728.884.898-3.636-.234-.372A9.777 9.777 0 0 1 2.18 12c0-5.42 4.404-9.818 9.824-9.818 5.418 0 9.82 4.398 9.82 9.818 0 5.422-4.402 9.818-9.82 9.818z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Tienda</h4>
+        <ul>
+          <li><a onclick="navigate('cat','audifonos')">Audífonos</a></li>
+          <li><a onclick="navigate('cat','consolas')">Consolas</a></li>
+          <li><a onclick="navigate('cat','bocinas')">Bocinas</a></li>
+          <li><a onclick="navigate('cat','smart')">Smart Home</a></li>
+          <li><a onclick="navigate('cat','redes')">Redes / Mesh</a></li>
+          <li><a onclick="navigate('cat','otros')">Otros</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a onclick="navigate('about')">Acerca de Audiz</a></li>
+          <li><a onclick="navigate('support')">Soporte</a></li>
+          <li><a href="https://wa.me/50557178449" target="_blank">WhatsApp</a></li>
+          <li><a href="https://instagram.com" target="_blank">Instagram</a></li>
+          <li><a href="https://facebook.com" target="_blank">Facebook</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contacto</h4>
+        <ul>
+          <li><a href="https://wa.me/50557178449" target="_blank">+505 5717-8449</a></li>
+          <li><a href="https://instagram.com" target="_blank">@audiz.nic</a></li>
+          <li><a href="https://facebook.com" target="_blank">Audiz Nicaragua</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© 2025 AUDIZ. Nicaragua.</span>
+      <div class="footer-legal"><a>Privacidad</a><a>Términos</a></div>
+    </div>
+  </footer>
+</div>
+
+<!-- CATEGORY PAGE -->
+<div id="page-category" class="page">
+  <div class="cat-page-hero" id="cat-hero">
+    <div>
+      <p class="cat-page-label" id="cat-label">Categoría</p>
+      <h1 class="cat-page-title" id="cat-title">Audífonos</h1>
+      <p class="cat-page-count" id="cat-count"></p>
+    </div>
+    <span class="cat-page-emoji" id="cat-emoji">🎧</span>
+  </div>
+  <div class="section">
+    <div class="products-grid" id="cat-products-grid"></div>
+  </div>
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo-footer">AUDIZ</span>
+        <p>Tecnología a buen precio en Nicaragua.</p>
+        <div class="footer-social">
+          <a class="social-btn" href="https://instagram.com" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a class="social-btn" href="https://facebook.com" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+          <a class="social-btn" href="https://wa.me/50557178449" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.004 0C5.374 0 0 5.373 0 12c0 2.117.554 4.104 1.523 5.827L0 24l6.336-1.502A11.959 11.959 0 0 0 12.004 24C18.63 24 24 18.627 24 12S18.63 0 12.004 0zm0 21.818a9.826 9.826 0 0 1-5.001-1.367l-.36-.214-3.728.884.898-3.636-.234-.372A9.777 9.777 0 0 1 2.18 12c0-5.42 4.404-9.818 9.824-9.818 5.418 0 9.82 4.398 9.82 9.818 0 5.422-4.402 9.818-9.82 9.818z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a onclick="navigate('about')">Acerca de Audiz</a></li>
+          <li><a onclick="navigate('support')">Soporte</a></li>
+          <li><a href="https://wa.me/50557178449" target="_blank">WhatsApp</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom"><span class="footer-copy">© 2025 AUDIZ. Nicaragua.</span></div>
+  </footer>
+</div>
+
+<!-- PRODUCT PAGE -->
+<div id="page-product" class="page">
+  <div class="product-detail-grid">
+    <div class="product-detail-gallery" id="pd-gallery">
+      <div class="pd-main-emoji" id="pd-main-emoji">🎧</div>
+      <img class="pd-main-img" id="pd-main-img" src="" alt="" style="display:none">
+      <div class="pd-thumbs" id="pd-thumbs"></div>
+    </div>
+    <div class="product-detail-info">
+      <button class="pd-back" onclick="goBack()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        Volver
+      </button>
+      <p class="pd-category" id="pd-category">Audífonos</p>
+      <h1 class="pd-name" id="pd-name">Producto</h1>
+      <p class="pd-price" id="pd-price">$0</p>
+      <span class="pd-condition" id="pd-condition"><span class="dot"></span>Nuevo</span>
+      <div id="pd-oos-msg" style="display:none" class="pd-oos-msg">⚠️ Este producto está agotado por el momento.</div>
+      <p class="pd-desc" id="pd-desc"></p>
+      <div class="pd-add-row">
+        <button class="pd-btn-cart" id="pd-add-btn" onclick="addCurrentToCart()">Añadir al carrito</button>
+        <button class="pd-btn-wa" onclick="buyNowWhatsapp()" title="Consultar por WhatsApp">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.004 0C5.374 0 0 5.373 0 12c0 2.117.554 4.104 1.523 5.827L0 24l6.336-1.502A11.959 11.959 0 0 0 12.004 24C18.63 24 24 18.627 24 12S18.63 0 12.004 0zm0 21.818a9.826 9.826 0 0 1-5.001-1.367l-.36-.214-3.728.884.898-3.636-.234-.372A9.777 9.777 0 0 1 2.18 12c0-5.42 4.404-9.818 9.824-9.818 5.418 0 9.82 4.398 9.82 9.818 0 5.422-4.402 9.818-9.82 9.818z"/></svg>
+        </button>
+      </div>
+      <p class="pd-section-title">Características</p>
+      <ul class="pd-features" id="pd-features"></ul>
+      <p class="pd-section-title">¿Qué incluye?</p>
+      <div class="pd-includes" id="pd-includes"></div>
+      <p class="pd-section-title" style="margin-top:36px;border-top:1px solid var(--gray-200);padding-top:20px">Disponibilidad</p>
+      <p style="font-size:13px;color:var(--gray-600)" id="pd-stock">✅ Disponible · Entrega en León y envíos a todo Nicaragua</p>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo-footer">AUDIZ</span>
+        <p>Tecnología a buen precio en Nicaragua.</p>
+        <div class="footer-social">
+          <a class="social-btn" href="https://instagram.com" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a class="social-btn" href="https://wa.me/50557178449" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.004 0C5.374 0 0 5.373 0 12c0 2.117.554 4.104 1.523 5.827L0 24l6.336-1.502A11.959 11.959 0 0 0 12.004 24C18.63 24 24 18.627 24 12S18.63 0 12.004 0zm0 21.818a9.826 9.826 0 0 1-5.001-1.367l-.36-.214-3.728.884.898-3.636-.234-.372A9.777 9.777 0 0 1 2.18 12c0-5.42 4.404-9.818 9.824-9.818 5.418 0 9.82 4.398 9.82 9.818 0 5.422-4.402 9.818-9.82 9.818z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a onclick="navigate('about')">Acerca de Audiz</a></li>
+          <li><a onclick="navigate('support')">Soporte</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom"><span class="footer-copy">© 2025 AUDIZ. Nicaragua.</span></div>
+  </footer>
+</div>
+
+<!-- ABOUT PAGE -->
+<div id="page-about" class="page">
+  <div class="about-page">
+    <div class="about-hero">
+      <h1>Acerca de AUDIZ</h1>
+      <p>Nacimos con una idea simple: acercar la tecnología que importa a las personas que la merecen.</p>
+    </div>
+    <div class="about-content">
+      <h2>Nuestra historia</h2>
+      <p>AUDIZ es una tienda de electrónica en León, Nicaragua, especializada en audífonos, consolas de videojuegos, bocinas, dispositivos inteligentes y accesorios. Ofrecemos tecnología de calidad a precios accesibles, con atención directa y personalizada.</p>
+      <h2>¿Por qué AUDIZ?</h2>
+      <p>Porque la tecnología no debe ser inalcanzable. Seleccionamos cada producto con cuidado, verificamos su estado y te lo entregamos con honestidad y rapidez. Enviamos a todo Nicaragua.</p>
+      <h2>Atención directa</h2>
+      <p>Pedís por WhatsApp, te respondemos de inmediato. Sin formularios, sin esperas, sin complicaciones. Así trabajamos en AUDIZ.</p>
+      <div style="margin-top:48px;display:flex;gap:12px;flex-wrap:wrap">
+        <a href="https://wa.me/50557178449" target="_blank" class="btn-primary" style="text-decoration:none">Contactar por WhatsApp</a>
+        <button class="btn-outline" onclick="navigate('support')">Ver soporte</button>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand"><span class="logo-footer">AUDIZ</span><p>Tecnología a buen precio en Nicaragua.</p></div>
+      <div class="footer-col"><h4>Navegación</h4><ul><li><a onclick="navigate('home')">Inicio</a></li><li><a onclick="navigate('support')">Soporte</a></li><li><a href="https://wa.me/50557178449" target="_blank">Contacto</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span class="footer-copy">© 2025 AUDIZ. Nicaragua.</span></div>
+  </footer>
+</div>
+
+<!-- SUPPORT PAGE -->
+<div id="page-support" class="page">
+  <div class="support-page">
+    <div class="support-hero">
+      <h1>Soporte</h1>
+      <p>Estamos aquí para ayudarte con cualquier pregunta sobre tus productos Audiz.</p>
+    </div>
+    <div class="support-cards">
+      <div class="support-card" onclick="window.open('https://wa.me/50557178449','_blank')">
+        <div class="support-card-icon">💬</div>
+        <h3>WhatsApp</h3>
+        <p>La forma más rápida. Chateá directo con nosotros y resolvemos tu consulta al instante.</p>
+      </div>
+      <div class="support-card" onclick="window.open('https://instagram.com','_blank')">
+        <div class="support-card-icon">📸</div>
+        <h3>Instagram</h3>
+        <p>Seguinos y escribinos por DM. Publicamos novedades y respondemos mensajes.</p>
+      </div>
+      <div class="support-card" onclick="window.open('https://facebook.com','_blank')">
+        <div class="support-card-icon">📘</div>
+        <h3>Facebook</h3>
+        <p>Encontranos en Facebook para más información y atención al cliente.</p>
+      </div>
+    </div>
+    <div style="max-width:680px;margin:0 auto;padding:0 40px 80px">
+      <h2 style="font-family:var(--font-display);font-size:26px;margin-bottom:32px">Preguntas frecuentes</h2>
+      <div style="border-top:1px solid var(--gray-200)">
+        <div style="padding:20px 0;border-bottom:1px solid var(--gray-200)"><strong>¿Cómo realizo un pedido?</strong><p style="margin-top:8px;font-size:13.5px;color:var(--gray-600);line-height:1.6">Agregás los productos al carrito y hacés clic en "Pedir por WhatsApp". Se genera un mensaje automático con tu pedido.</p></div>
+        <div style="padding:20px 0;border-bottom:1px solid var(--gray-200)"><strong>¿Entregan en toda Nicaragua?</strong><p style="margin-top:8px;font-size:13.5px;color:var(--gray-600);line-height:1.6">Sí. Tenemos entrega directa en León y hacemos envíos a todo el país. Coordinamos por WhatsApp.</p></div>
+        <div style="padding:20px 0;border-bottom:1px solid var(--gray-200)"><strong>¿Los productos tienen garantía?</strong><p style="margin-top:8px;font-size:13.5px;color:var(--gray-600);line-height:1.6">Cada producto indica si es nuevo o usado. Consultanos por WhatsApp los detalles de garantía.</p></div>
+        <div style="padding:20px 0"><strong>¿Qué métodos de pago aceptan?</strong><p style="margin-top:8px;font-size:13.5px;color:var(--gray-600);line-height:1.6">Coordinamos el pago por WhatsApp. Aceptamos efectivo y transferencias. Consultanos para más detalles.</p></div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand"><span class="logo-footer">AUDIZ</span><p>Tecnología a buen precio en Nicaragua.</p></div>
+      <div class="footer-col"><h4>Navegación</h4><ul><li><a onclick="navigate('home')">Inicio</a></li><li><a onclick="navigate('about')">Acerca de</a></li><li><a href="https://wa.me/50557178449" target="_blank">Contacto</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span class="footer-copy">© 2025 AUDIZ. Nicaragua.</span></div>
+  </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  DEFAULT CATALOG — loaded if admin hasn't set anything
+// ═══════════════════════════════════════
+const DEFAULT_PRODUCTS = [
+  { id:'beats-studio-pro', name:'Beats Studio Pro', category:'audifonos', categoryLabel:'Audífonos', price:220, emoji:'🎧', condition:'new', badge:'Destacado', badgeType:'gold', inStock:true, desc:'Audífonos over-ear con cancelación de ruido activa personalizada, sonido espacial y hasta 40 horas de batería.', features:['Cancelación de ruido activa personalizada (ANC)','Hasta 40 horas de batería con ANC activado','Sonido espacial con seguimiento de cabeza dinámico','Compatible con Apple y Android','Carga rápida: 10 min = 4 horas'], includes:['Audífonos Beats Studio Pro','Cable USB-C a 3.5mm','Cable USB-C a USB-C','Estuche rígido'], images:[] },
+  { id:'ps4-liberada', name:'PlayStation 4 Liberada', category:'consolas', categoryLabel:'Consolas', price:220, emoji:'🎮', condition:'used', badge:'Usado', badgeType:'used', inStock:true, desc:'PlayStation 4 liberada y lista para jugar. Consola en excelente estado, verificada antes de la venta.', features:['Liberada — compatible con todos los juegos','Almacenamiento 500GB','Wi-Fi integrado','Probada y verificada'], includes:['Consola PS4','1 control DualShock 4','Cable HDMI','Cable de alimentación'], images:[] },
+  { id:'google-home', name:'Google Home', category:'smart', categoryLabel:'Smart Home', price:25, emoji:'🏠', condition:'new', badge:'Destacado', badgeType:'gold', inStock:true, desc:'Bocina inteligente con Google Assistant. Controlá tu hogar, reproducí música y más con tu voz.', features:['Google Assistant integrado','Control de dispositivos inteligentes','Reproducción de música Spotify, YouTube Music','Alarmas y recordatorios'], includes:['Google Home','Adaptador de alimentación','Guía de inicio rápido'], images:[] },
+  { id:'google-nest-hub', name:'Google Nest Hub 2da Gen', category:'smart', categoryLabel:'Smart Home', price:70, emoji:'📱', condition:'new', badge:'Destacado', badgeType:'gold', inStock:true, desc:'Centro de control para hogar inteligente con pantalla táctil de 7 pulgadas y sensor de sueño.', features:['Pantalla táctil 7 pulgadas','Google Assistant integrado','Sensor de sueño sin wearable','YouTube, Spotify, Google Fotos'], includes:['Google Nest Hub 2da Gen','Cable de alimentación'], images:[] },
+  { id:'jbl-charge5', name:'JBL Charge 5', category:'bocinas', categoryLabel:'Bocinas Portátiles', price:95, emoji:'🔊', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Bocina Bluetooth portátil IP67 con 20 horas de batería y función de carga de dispositivos.', features:['IP67 resistente al agua y polvo','20 horas de batería','Carga de dispositivos externos','JBL PartyBoost'], includes:['Bocina JBL Charge 5','Cable USB-C'], images:[] },
+  { id:'anker-powerbank', name:'Anker PowerCore 20000', category:'baterias', categoryLabel:'Baterías Portátiles', price:42, emoji:'🔋', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Batería portátil de 20,000mAh. Cargá tu teléfono hasta 5 veces.', features:['20,000mAh de capacidad','Carga hasta 5 veces tu celular','2 puertos USB-A + 1 USB-C'], includes:['PowerCore 20000','Cable micro USB'], images:[] },
+  { id:'tp-link-deco', name:'TP-Link Deco M4 (×2)', category:'redes', categoryLabel:'Redes / Mesh', price:75, emoji:'📡', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Sistema WiFi Mesh doble banda. Cubre hasta 260m² con señal fuerte en toda la casa.', features:['Cobertura 260m² con 2 unidades','Doble banda AC1200','Roaming inteligente','Control parental'], includes:['2 unidades Deco M4','2 cables Ethernet','2 adaptadores'], images:[] },
+  { id:'auto-rc-offroad', name:'Auto RC Off-Road 4x4', category:'otros', categoryLabel:'Otros', price:45, emoji:'🚗', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Auto a control remoto 4x4 con tracción total para terrenos difíciles. Alta velocidad, ruedas grandes.', features:['Tracción 4x4','Velocidad máxima 30 km/h','Control 2.4GHz hasta 80m','Batería recargable'], includes:['Auto RC 4x4','Control remoto','Batería','Cargador USB'], images:[] },
+  { id:'drone-mini', name:'Drone Mini HD', category:'otros', categoryLabel:'Otros', price:65, emoji:'🚁', condition:'new', badge:'Nuevo', badgeType:'', inStock:true, desc:'Drone compacto con cámara HD, hover automático y control WiFi desde tu celular.', features:['Cámara HD 720p','Hover automático','Control app Android/iOS','15 min de vuelo por carga'], includes:['Drone Mini HD','Control remoto','2 baterías','Hélices de repuesto'], images:[] }
+];
+
+const CATEGORIES = {
+  audifonos: { label:'Audífonos', emoji:'🎧' },
+  consolas:  { label:'Consolas de Videojuegos', emoji:'🎮' },
+  bocinas:   { label:'Bocinas Portátiles', emoji:'🔊' },
+  smart:     { label:'Smart Home', emoji:'🏠' },
+  accesorios:{ label:'Accesorios de Consola', emoji:'🕹️' },
+  baterias:  { label:'Baterías Portátiles', emoji:'🔋' },
+  redes:     { label:'Redes / Mesh', emoji:'📡' },
+  otros:     { label:'Otros', emoji:'📦' }
+};
+
+const WA = '50557178449';
+
+// ═══ STATE — persistent via localStorage ═══
+let products = [];
+let cart = [];
+let currentProduct = null;
+let previousPage = 'home';
+let currentPage = 'home';
+let currentCat = null;
+
+function loadState() {
+  // Load catalog from localStorage (admin may have updated it)
+  try {
+    const saved = localStorage.getItem('audiz_catalog');
+    products = saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
+  } catch(e) { products = DEFAULT_PRODUCTS; }
+
+  // Load cart
+  try {
+    const savedCart = localStorage.getItem('audiz_cart');
+    cart = savedCart ? JSON.parse(savedCart) : [];
+  } catch(e) { cart = []; }
+
+  // Load last page
+  try {
+    const nav = localStorage.getItem('audiz_nav');
+    if (nav) {
+      const s = JSON.parse(nav);
+      currentPage = s.page || 'home';
+      currentCat  = s.cat  || null;
+      if (s.productId) {
+        const p = products.find(x => x.id === s.productId);
+        if (p) { currentProduct = p; }
+      }
+    }
+  } catch(e) {}
+}
+
+function saveCart() {
+  localStorage.setItem('audiz_cart', JSON.stringify(cart));
+}
+
+function saveNav() {
+  const s = { page: currentPage, cat: currentCat, productId: currentProduct?.id || null };
+  localStorage.setItem('audiz_nav', JSON.stringify(s));
+}
+
+// ═══ NAVIGATION ═══
+function navigate(page, cat, productId) {
+  previousPage = currentPage;
+  currentPage = page;
+  currentCat = cat || null;
+
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-categories li a').forEach(a => a.classList.remove('active'));
+
+  if (page === 'home') {
+    document.getElementById('page-home').classList.add('active');
+    renderFeatured();
+  } else if (page === 'cat') {
+    renderCategoryPage(cat);
+    document.getElementById('page-category').classList.add('active');
+    document.querySelectorAll('.nav-categories li a').forEach(a => {
+      if (a.getAttribute('onclick')?.includes(`'${cat}'`)) a.classList.add('active');
+    });
+  } else if (page === 'product') {
+    const p = productId ? products.find(x => x.id === productId) : currentProduct;
+    if (p) renderProductPage(p);
+    document.getElementById('page-product').classList.add('active');
+  } else if (page === 'about') {
+    document.getElementById('page-about').classList.add('active');
+  } else if (page === 'support') {
+    document.getElementById('page-support').classList.add('active');
+  }
+
+  window.scrollTo(0, 0);
+  saveNav();
+}
+
+function goBack() {
+  if (previousPage === 'cat' && currentCat) navigate('cat', currentCat);
+  else if (previousPage && previousPage !== 'product') navigate(previousPage, currentCat);
+  else navigate('home');
+}
+
+// ═══ RESTORE SESSION ON LOAD ═══
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  updateCartUI();
+
+  // Restore to last page
+  if (currentPage === 'product' && currentProduct) {
+    navigate('product', null, currentProduct.id);
+  } else if (currentPage === 'cat' && currentCat) {
+    navigate('cat', currentCat);
+  } else if (currentPage === 'about') {
+    navigate('about');
+  } else if (currentPage === 'support') {
+    navigate('support');
+  } else {
+    navigate('home');
+  }
+});
+
+// ═══ RENDER HELPERS ═══
+function getThumb(p) {
+  const cover = p.images && p.images.length > 0 ? p.images.find(i => i.isCover) || p.images[0] : null;
+  if (cover) return `<img src="${cover.url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span style="display:none;font-size:80px;align-items:center;justify-content:center;width:100%;height:100%">${p.emoji}</span>`;
+  return `<span style="font-size:80px">${p.emoji}</span>`;
+}
+
+function productCard(p) {
+  const badgeHtml = p.badge ? `<span class="product-badge ${p.badgeType || ''}">${p.badge}</span>` : '';
+  const oosHtml = !p.inStock ? `<div class="out-of-stock-banner"><span class="out-of-stock-label">Agotado</span></div>` : '';
+  const addDisabled = !p.inStock ? 'disabled title="Agotado"' : '';
+  return `
+  <div class="product-card${!p.inStock?' out-of-stock':''}" onclick="navigate('product',null,'${p.id}')">
+    <div class="product-img-wrap">
+      ${badgeHtml}${oosHtml}${getThumb(p)}
+    </div>
+    <div class="product-info">
+      <p class="product-category">${p.categoryLabel}</p>
+      <h3 class="product-name">${p.name}</h3>
+      <p class="product-desc">${p.desc}</p>
+      <div class="product-footer">
+        <span class="product-price">$${p.price}</span>
+        <button class="product-add" ${addDisabled} onclick="event.stopPropagation();addToCart('${p.id}')">+</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderFeatured() {
+  const featured = products.filter(p => p.inStock && (p.badgeType === 'gold' || p.badge === 'Destacado')).slice(0, 4);
+  const others = products.filter(p => !featured.includes(p)).slice(0, 4);
+  const all = [...featured, ...others].slice(0, 8);
+  document.getElementById('featured-grid').innerHTML = all.length ? all.map(productCard).join('') : '<p style="color:var(--gray-400);padding:40px">No hay productos disponibles aún.</p>';
+}
+
+function renderCategoryPage(cat) {
+  const info = CATEGORIES[cat] || { label: cat, emoji: '📦' };
+  const catProducts = products.filter(p => p.category === cat);
+  document.getElementById('cat-label').textContent = 'Categoría';
+  document.getElementById('cat-title').textContent = info.label;
+  document.getElementById('cat-emoji').textContent = info.emoji;
+  document.getElementById('cat-count').textContent = `${catProducts.length} producto${catProducts.length !== 1 ? 's' : ''}`;
+  document.getElementById('cat-products-grid').innerHTML = catProducts.length
+    ? catProducts.map(productCard).join('')
+    : `<div class="empty-cat"><div class="empty-cat-icon">${info.emoji}</div><p>No hay productos en esta categoría aún.</p></div>`;
+}
+
+function renderProductPage(p) {
+  currentProduct = p;
+  const cover = p.images && p.images.length > 0 ? (p.images.find(i => i.isCover) || p.images[0]) : null;
+
+  // Main visual
+  const emojiEl = document.getElementById('pd-main-emoji');
+  const imgEl   = document.getElementById('pd-main-img');
+  if (cover) {
+    imgEl.src = cover.url;
+    imgEl.alt = p.name;
+    imgEl.style.display = 'block';
+    emojiEl.style.display = 'none';
+  } else {
+    emojiEl.textContent = p.emoji;
+    emojiEl.style.display = 'flex';
+    imgEl.style.display = 'none';
+  }
+
+  // Thumbnails
+  const thumbs = document.getElementById('pd-thumbs');
+  if (p.images && p.images.length > 1) {
+    thumbs.innerHTML = p.images.map((img, idx) => `
+      <div class="pd-thumb ${img.isCover || idx===0?'active':''}" onclick="switchImage('${img.url}', this)">
+        <img src="${img.url}" alt="${p.name}">
+      </div>`).join('');
+  } else {
+    thumbs.innerHTML = '';
+  }
+
+  document.getElementById('pd-category').textContent = p.categoryLabel;
+  document.getElementById('pd-name').textContent = p.name;
+  document.getElementById('pd-price').textContent = `$${p.price}`;
+
+  const condEl = document.getElementById('pd-condition');
+  condEl.className = `pd-condition${p.condition === 'used' ? ' used' : ''}`;
+  condEl.innerHTML = `<span class="dot"></span>${p.condition === 'new' ? 'Producto Nuevo' : 'Producto Usado — Revisado'}`;
+
+  const oosMsg = document.getElementById('pd-oos-msg');
+  const addBtn = document.getElementById('pd-add-btn');
+  if (!p.inStock) {
+    oosMsg.style.display = 'block';
+    addBtn.disabled = true;
+    addBtn.textContent = 'Agotado';
+    document.getElementById('pd-stock').innerHTML = '⛔ Agotado · Consultá disponibilidad por WhatsApp';
+  } else {
+    oosMsg.style.display = 'none';
+    addBtn.disabled = false;
+    addBtn.textContent = 'Añadir al carrito';
+    document.getElementById('pd-stock').innerHTML = '✅ Disponible · Entrega en León y envíos a todo Nicaragua';
+  }
+
+  document.getElementById('pd-desc').textContent = p.desc;
+  document.getElementById('pd-features').innerHTML = (p.features || []).map(f => `<li>${f}</li>`).join('');
+  document.getElementById('pd-includes').innerHTML = (p.includes || []).map(i => `<span class="pd-include-tag">${i}</span>`).join('');
+  saveNav();
+}
+
+function switchImage(url, el) {
+  const imgEl = document.getElementById('pd-main-img');
+  const emojiEl = document.getElementById('pd-main-emoji');
+  imgEl.src = url;
+  imgEl.style.display = 'block';
+  emojiEl.style.display = 'none';
+  document.querySelectorAll('.pd-thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ═══ SEARCH ═══
+function toggleSearch() {
+  const o = document.getElementById('search-overlay');
+  o.classList.toggle('open');
+  if (o.classList.contains('open')) {
+    setTimeout(() => document.getElementById('search-input').focus(), 100);
+    document.getElementById('search-input').value = '';
+    document.getElementById('search-results').innerHTML = '';
+    document.getElementById('search-hint').style.display = 'block';
+  }
+}
+
+function doSearch(q) {
+  const query = q.trim().toLowerCase();
+  const hint = document.getElementById('search-hint');
+  const results = document.getElementById('search-results');
+  if (!query) { results.innerHTML = ''; hint.style.display = 'block'; return; }
+  hint.style.display = 'none';
+  const matches = products.filter(p =>
+    p.name.toLowerCase().includes(query) ||
+    p.categoryLabel.toLowerCase().includes(query) ||
+    p.desc.toLowerCase().includes(query)
+  );
+  if (!matches.length) {
+    results.innerHTML = `<p style="color:rgba(255,255,255,0.4);font-size:14px;padding:20px 16px">No se encontraron resultados para "${q}"</p>`;
+    return;
+  }
+  results.innerHTML = matches.slice(0, 6).map(p => {
+    const cover = p.images && p.images.length > 0 ? (p.images.find(i => i.isCover) || p.images[0]) : null;
+    const thumb = cover ? `<img src="${cover.url}" alt="${p.name}">` : p.emoji;
+    return `
+    <div class="search-result-item" onclick="toggleSearch();navigate('product',null,'${p.id}')">
+      <div class="search-result-img">${thumb}</div>
+      <div class="search-result-info">
+        <p class="search-result-name">${p.name}</p>
+        <p class="search-result-cat">${p.categoryLabel} · ${p.condition === 'new' ? 'Nuevo' : 'Usado'}${!p.inStock?' · Agotado':''}</p>
+      </div>
+      <span class="search-result-price">$${p.price}</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══ CART ═══
+function toggleCart() {
+  document.getElementById('cart-overlay').classList.toggle('open');
+  document.getElementById('cart-drawer').classList.toggle('open');
+}
+
+function addToCart(id) {
+  const p = products.find(x => x.id === id);
+  if (!p || !p.inStock) return;
+  const existing = cart.find(i => i.id === id);
+  if (existing) existing.qty++;
+  else cart.push({ id: p.id, name: p.name, price: p.price, emoji: p.emoji, categoryLabel: p.categoryLabel, condition: p.condition, qty: 1, images: p.images || [] });
+  saveCart();
+  updateCartUI();
+  showToast(`${p.name} añadido al carrito`);
+}
+
+function addCurrentToCart() {
+  if (currentProduct) addToCart(currentProduct.id);
+}
+
+function removeFromCart(id) {
+  cart = cart.filter(i => i.id !== id);
+  saveCart();
+  updateCartUI();
+}
+
+function changeQty(id, delta) {
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) removeFromCart(id);
+  else { saveCart(); updateCartUI(); }
+}
+
+function updateCartUI() {
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  const badge = document.getElementById('cart-badge');
+  badge.textContent = count;
+  badge.classList.toggle('show', count > 0);
+  const itemsEl = document.getElementById('cart-items');
+  const footerEl = document.getElementById('cart-footer');
+  if (!cart.length) {
+    itemsEl.innerHTML = `<div class="cart-empty"><span class="cart-empty-icon">🛍️</span><span class="cart-empty-text">Tu carrito está vacío</span></div>`;
+    footerEl.style.display = 'none';
+    return;
+  }
+  footerEl.style.display = 'block';
+  document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+  itemsEl.innerHTML = cart.map(i => {
+    const cover = i.images && i.images.length > 0 ? (i.images.find(x => x.isCover) || i.images[0]) : null;
+    const thumb = cover ? `<img src="${cover.url}" alt="${i.name}">` : i.emoji;
+    return `
+    <div class="cart-item">
+      <div class="cart-item-thumb">${cover ? `<img src="${cover.url}" alt="${i.name}">` : i.emoji}</div>
+      <div class="cart-item-info">
+        <p class="cart-item-name">${i.name}</p>
+        <p class="cart-item-variant">${i.categoryLabel} · ${i.condition === 'new' ? 'Nuevo' : 'Usado'}</p>
+      </div>
+      <div class="cart-item-controls">
+        <span class="cart-item-price">$${(i.price * i.qty).toFixed(2)}</span>
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="changeQty('${i.id}',-1)">−</button>
+          <span class="qty-num">${i.qty}</span>
+          <button class="qty-btn" onclick="changeQty('${i.id}',1)">+</button>
+        </div>
+        <button class="remove-btn" onclick="removeFromCart('${i.id}')">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function checkoutWhatsapp() {
+  if (!cart.length) return;
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  let msg = '🛒 *¡Hola Audiz! Quiero realizar el siguiente pedido:*\n\n';
+  cart.forEach(i => { msg += `• *${i.name}* × ${i.qty} — $${(i.price * i.qty).toFixed(2)}\n`; });
+  msg += `\n*Total estimado: $${total.toFixed(2)}*\n\n¿Pueden confirmar disponibilidad y coordinar la entrega? 🙏`;
+  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function buyNowWhatsapp() {
+  if (!currentProduct) return;
+  const p = currentProduct;
+  const msg = `🛍️ *¡Hola Audiz! Estoy interesado en:*\n\n• *${p.name}* — $${p.price}\n  ${p.condition === 'new' ? '✅ Nuevo' : '🔄 Usado'}${!p.inStock ? '\n  ⚠️ Vi que estaba agotado, ¿tienen disponibilidad?' : ''}\n\n¿Está disponible? ¿Cuándo pueden entregar? 🙏`;
+  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ═══ TOAST ═══
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Close search on outside click
+document.getElementById('search-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) toggleSearch(); });
+</script>
+</body>
+</html>
